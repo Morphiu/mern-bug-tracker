@@ -21,10 +21,11 @@ const CreateBug = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'open',
-    priority: 'medium',
+    status: '',
+    priority: '',
     assignedTo: null,
   });
+  const [errors, setErrors] = useState({});
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,24 @@ const CreateBug = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.title) {
+      newErrors.title = 'Title is required';
+    }
+    if (!formData.description) {
+      newErrors.description = 'Description is required';
+    }
+    if (!formData.status) {
+      newErrors.status = 'Status is required';
+    }
+    if (!formData.priority) {
+      newErrors.priority = 'Priority is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const fetchUsers = async () => {
     try {
@@ -66,12 +85,24 @@ const CreateBug = () => {
       ...formData,
       [e.target.name]: value,
     });
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: '',
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const token = localStorage.getItem('token');
@@ -91,6 +122,10 @@ const CreateBug = () => {
       setLoading(false);
     }
   };
+
+  if (!users.length && !error) {
+    return <Typography>Loading...</Typography>;
+  }
 
   return (
     <Container maxWidth="md">
@@ -113,6 +148,8 @@ const CreateBug = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.title}
+              helperText={errors.title}
             />
             <TextField
               fullWidth
@@ -124,33 +161,47 @@ const CreateBug = () => {
               multiline
               rows={4}
               required
+              error={!!errors.description}
+              helperText={errors.description}
             />
             <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-              <FormControl fullWidth>
+              <FormControl fullWidth error={!!errors.status}>
                 <InputLabel>Status</InputLabel>
                 <Select
                   name="status"
                   value={formData.status}
                   label="Status"
                   onChange={handleChange}
+                  required
                 >
                   <MenuItem value="open">Open</MenuItem>
                   <MenuItem value="in-progress">In Progress</MenuItem>
                   <MenuItem value="resolved">Resolved</MenuItem>
                 </Select>
+                {errors.status && (
+                  <Typography color="error" variant="caption" sx={{ mt: 1, ml: 2 }}>
+                    {errors.status}
+                  </Typography>
+                )}
               </FormControl>
-              <FormControl fullWidth>
+              <FormControl fullWidth error={!!errors.priority}>
                 <InputLabel>Priority</InputLabel>
                 <Select
                   name="priority"
                   value={formData.priority}
                   label="Priority"
                   onChange={handleChange}
+                  required
                 >
                   <MenuItem value="high">High</MenuItem>
                   <MenuItem value="medium">Medium</MenuItem>
                   <MenuItem value="low">Low</MenuItem>
                 </Select>
+                {errors.priority && (
+                  <Typography color="error" variant="caption" sx={{ mt: 1, ml: 2 }}>
+                    {errors.priority}
+                  </Typography>
+                )}
               </FormControl>
             </Box>
             <FormControl fullWidth sx={{ mt: 2 }}>
@@ -169,7 +220,14 @@ const CreateBug = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/bugs')}
+                sx={{ minWidth: 120 }}
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 variant="contained"

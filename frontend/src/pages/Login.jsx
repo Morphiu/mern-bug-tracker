@@ -48,23 +48,24 @@ const Login = () => {
         [e.target.name]: '',
       });
     }
+    setError(''); // Clear any previous login error
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     if (!validateForm()) {
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     try {
       await login(formData.email, formData.password);
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError('Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ const Login = () => {
               {error}
             </Alert>
           )}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <TextField
               fullWidth
               label="Email"
@@ -94,6 +95,9 @@ const Login = () => {
               required
               error={!!errors.email}
               helperText={errors.email}
+              inputProps={{
+                'data-testid': 'email-input',
+              }}
             />
             <TextField
               fullWidth
@@ -106,6 +110,9 @@ const Login = () => {
               required
               error={!!errors.password}
               helperText={errors.password}
+              inputProps={{
+                'data-testid': 'password-input',
+              }}
             />
             <Button
               type="submit"
@@ -121,7 +128,7 @@ const Login = () => {
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
               Don't have an account?{' '}
-              <Link to="/register" style={{ textDecoration: 'none' }} onClick={() => navigate('/register')}>
+              <Link to="/register" style={{ textDecoration: 'none' }}>
                 Register
               </Link>
             </Typography>
