@@ -16,16 +16,38 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email format';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: '',
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -33,11 +55,16 @@ const Login = () => {
     setError('');
     setLoading(true);
 
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
+
     try {
       await login(formData.email, formData.password);
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -65,6 +92,8 @@ const Login = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.email}
+              helperText={errors.email}
             />
             <TextField
               fullWidth
@@ -75,6 +104,8 @@ const Login = () => {
               onChange={handleChange}
               margin="normal"
               required
+              error={!!errors.password}
+              helperText={errors.password}
             />
             <Button
               type="submit"
@@ -90,7 +121,7 @@ const Login = () => {
           <Box sx={{ mt: 2, textAlign: 'center' }}>
             <Typography variant="body2">
               Don't have an account?{' '}
-              <Link to="/register" style={{ textDecoration: 'none' }}>
+              <Link to="/register" style={{ textDecoration: 'none' }} onClick={() => navigate('/register')}>
                 Register
               </Link>
             </Typography>
